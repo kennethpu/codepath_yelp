@@ -45,5 +45,10 @@ class BusinessCell: UITableViewCell {
 
         // Configure the view for the selected state
     }
+    
+    override func prepareForReuse() {
+        self.thumbImageView.image = nil
+        self.ratingsImageView.image = nil
+    }
 
 }

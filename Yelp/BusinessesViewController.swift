@@ -41,13 +41,28 @@ class BusinessesViewController: UIViewController {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-}
-
-extension BusinessesViewController: UITableViewDataSource {
     
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        let navigationController = segue.destinationViewController as! UINavigationController
+        let filtersViewController = navigationController.topViewController as! FiltersViewController
+        filtersViewController.delegate = self
+    }
 }
 
-extension BusinessesViewController: UITableViewDelegate {
+extension BusinessesViewController: FiltersViewControllerDelegate {
+    func filtersViewController(filtersViewController: FiltersViewController, didUpdateFilters filters: [String : AnyObject]) {
+        
+        let categories = filters["categories"] as? [String]
+        
+        Business.searchWithTerm("Restaurants", sort: nil, categories: categories, deals: nil) {
+            (businesses: [Business]!, error: NSError!) -> Void in
+            self.businesses = businesses
+            self.tableView.reloadData()
+        }
+    }
+}
+
+extension BusinessesViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if (businesses != nil) {
             return businesses!.count
