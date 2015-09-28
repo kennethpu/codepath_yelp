@@ -334,6 +334,7 @@ extension FiltersViewController: UITableViewDataSource, UITableViewDelegate {
             cell!.textLabel!.text = selectedDistance
             cell!.textLabel!.textAlignment = NSTextAlignment.Left
             cell!.accessoryView = UIImageView(image: UIImage(named: "expand"))
+            cell?.accessoryType = UITableViewCellAccessoryType.None
             
             return cell!
         case 1 where distanceExpanded!:
@@ -343,6 +344,7 @@ extension FiltersViewController: UITableViewDataSource, UITableViewDelegate {
             }
             cell!.textLabel!.text = distances[indexPath.row]
             cell!.textLabel!.textAlignment = NSTextAlignment.Left
+            cell!.accessoryView = nil
             cell!.accessoryType = (cell!.textLabel!.text == selectedDistance) ? UITableViewCellAccessoryType.Checkmark : UITableViewCellAccessoryType.None
             
             return cell!
