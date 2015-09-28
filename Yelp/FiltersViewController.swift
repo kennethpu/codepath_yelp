@@ -16,6 +16,17 @@ class FiltersViewController: UIViewController {
 
     @IBOutlet weak var tableView: UITableView!
     
+    var dealOffered: Bool!
+    
+    var distanceExpanded: Bool!
+    var distances: [String]!
+    var selectedDistance: String!
+    var distanceDict: [String:Int]!
+    
+    var sortExpanded: Bool!
+    var sortTypes: [String]!
+    var selectedSort: String!
+    
     var categories: [[String:String]]!
     var switchStates = [Int:Bool]()
     
@@ -24,10 +35,25 @@ class FiltersViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        dealOffered = false
+        
+        distanceExpanded = false
+//        distances = ["Auto", "500 meters", "1,600 meters", "8,000 meters", "40,000 meters"]
+        distances = ["Auto", "0.3 miles", "1 mile", "5 miles", "20 miles"]
+        selectedDistance = "Auto"
+//        distanceDict = ["Auto":0, "500 meters":500, "1,600 meters":1600, "8,000 meters":8000, "40,000 meters":40000]
+        distanceDict = ["Auto":0, "0.3 miles":483, "1 mile":1610, "5 miles":8047, "20 miles":32187]
+        
+        sortExpanded = false
+        sortTypes = ["Best Match", "Distance", "Highest Rated"]
+        selectedSort = "Best Match"
+        
         categories = yelpCategories()
         
         tableView.delegate = self
         tableView.dataSource = self
+        
+        tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier:"DefaultCell")
     }
 
     override func didReceiveMemoryWarning() {
@@ -42,6 +68,15 @@ class FiltersViewController: UIViewController {
     @IBAction func onSearchButton(sender: AnyObject) {
         dismissViewControllerAnimated(true, completion: nil)
         var filters = [String:AnyObject]()
+        
+        filters["deals"] = dealOffered
+        
+        let distance = distanceDict[selectedDistance]
+        if (distance != 0) {
+            filters["distance"] = distance
+        }
+        
+        filters["sort"] = sortTypes.indexOf(selectedSort)
         
         var selectedCategories = [String]()
         for (row,isSelected) in switchStates {
@@ -232,23 +267,157 @@ class FiltersViewController: UIViewController {
 extension FiltersViewController: SwitchCellDelegate {
     func switchCell(switchCell: SwitchCell, didChangeValue value: Bool) {
         let indexPath = tableView.indexPathForCell(switchCell)!
-        switchStates[indexPath.row] = value
+        if (indexPath.section == 0) {
+            dealOffered = value
+        } else if (indexPath.section == 3) {
+            switchStates[indexPath.row] = value
+        }
     }
 }
 
 extension FiltersViewController: UITableViewDataSource, UITableViewDelegate {
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 4
+    }
+    
+    func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        switch section {
+        case 0:
+            return ""
+        case 1:
+            return "Distance"
+        case 2:
+            return "Sort By"
+        case 3:
+            return "Category"
+        default:
+            return ""
+        }
+    }
+    
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categories!.count
+        switch section {
+        case 0:
+            return 1
+        case 1 where !distanceExpanded:
+            return 1
+        case 1 where distanceExpanded!:
+            return distances.count
+        case 2 where !sortExpanded:
+            return 1
+        case 2 where sortExpanded!:
+            return sortTypes.count
+        case 3:
+            return categories!.count
+        default:
+            return 1
+        }
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("SwitchCell", forIndexPath: indexPath) as! SwitchCell
-        
-        cell.switchLabel.text = self.categories[indexPath.row]["name"]
-        cell.delegate = self
-        
-        cell.onSwitch.on = switchStates[indexPath.row] ?? false
-        
-        return cell
+        switch indexPath.section {
+        case 0:
+            let cell = tableView.dequeueReusableCellWithIdentifier("SwitchCell", forIndexPath: indexPath) as! SwitchCell
+            cell.switchLabel.text = "Offering a Deal"
+            cell.delegate = self
+            cell.onSwitch.on = dealOffered
+            return cell
+        case 1 where !distanceExpanded:
+            var cell: UITableViewCell? = tableView.dequeueReusableCellWithIdentifier("DefaultCell", forIndexPath: indexPath)
+            if (cell == nil) {
+                cell = UITableViewCell.init(style: UITableViewCellStyle.Default, reuseIdentifier: "DefaultCell")
+            }
+            cell!.textLabel!.text = selectedDistance
+            cell!.accessoryView = UIImageView(image: UIImage(named: "expand"))
+            
+            return cell!
+        case 1 where distanceExpanded!:
+            var cell: UITableViewCell? = tableView.dequeueReusableCellWithIdentifier("DefaultCell", forIndexPath: indexPath)
+            if (cell == nil) {
+                cell = UITableViewCell.init(style: UITableViewCellStyle.Default, reuseIdentifier: "DefaultCell")
+            }
+            cell!.textLabel!.text = distances[indexPath.row]
+            cell!.accessoryType = (cell!.textLabel!.text == selectedDistance) ? UITableViewCellAccessoryType.Checkmark : UITableViewCellAccessoryType.None
+            
+            return cell!
+        case 2 where !sortExpanded:
+            var cell: UITableViewCell? = tableView.dequeueReusableCellWithIdentifier("DefaultCell", forIndexPath: indexPath)
+            if (cell == nil) {
+                cell = UITableViewCell.init(style: UITableViewCellStyle.Default, reuseIdentifier: "DefaultCell")
+            }
+            cell!.textLabel!.text = selectedSort
+            cell!.accessoryView = UIImageView(image: UIImage(named: "expand"))
+            cell!.accessoryType = UITableViewCellAccessoryType.None
+            
+            return cell!
+        case 2 where sortExpanded!:
+            var cell: UITableViewCell? = tableView.dequeueReusableCellWithIdentifier("DefaultCell", forIndexPath: indexPath)
+            if (cell == nil) {
+                cell = UITableViewCell.init(style: UITableViewCellStyle.Default, reuseIdentifier: "DefaultCell")
+            }
+            cell!.textLabel!.text = sortTypes[indexPath.row]
+            cell!.accessoryView = nil
+            cell!.accessoryType = (cell!.textLabel!.text == selectedSort) ? UITableViewCellAccessoryType.Checkmark : UITableViewCellAccessoryType.None
+            
+            return cell!
+        case 3:
+            let cell = tableView.dequeueReusableCellWithIdentifier("SwitchCell", forIndexPath: indexPath) as! SwitchCell
+            
+            cell.switchLabel.text = self.categories[indexPath.row]["name"]
+            cell.delegate = self
+            
+            cell.onSwitch.on = switchStates[indexPath.row] ?? false
+            
+            return cell
+        default:
+            let cell = tableView.dequeueReusableCellWithIdentifier("SwitchCell", forIndexPath: indexPath) as! SwitchCell
+            
+            cell.switchLabel.text = self.categories[indexPath.row]["name"]
+            cell.delegate = self
+            
+            cell.onSwitch.on = switchStates[indexPath.row] ?? false
+            
+            return cell
+        }
+    }
+    
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        if (indexPath.section == 1) {
+            var paths = [NSIndexPath]()
+            for index in 1...4 {
+                paths.append(NSIndexPath(forRow: index, inSection: 1))
+            }
+            distanceExpanded = !distanceExpanded
+            if (distanceExpanded!) {
+                tableView.beginUpdates()
+                tableView.reloadRowsAtIndexPaths([NSIndexPath(forRow: 0, inSection: 1)], withRowAnimation: UITableViewRowAnimation.None)
+                tableView.insertRowsAtIndexPaths(paths, withRowAnimation: UITableViewRowAnimation.Top)
+                tableView.endUpdates()
+            } else {
+                selectedDistance = distances[indexPath.row]
+                tableView.beginUpdates()
+                tableView.reloadRowsAtIndexPaths([NSIndexPath(forRow: 0, inSection: 1)], withRowAnimation: UITableViewRowAnimation.None)
+                tableView.deleteRowsAtIndexPaths(paths, withRowAnimation: UITableViewRowAnimation.Top)
+                tableView.endUpdates()
+            }
+        } else if (indexPath.section == 2) {
+            var paths = [NSIndexPath]()
+            for index in 1...2 {
+                paths.append(NSIndexPath(forRow: index, inSection: 2))
+            }
+            sortExpanded = !sortExpanded
+            if (sortExpanded!) {
+                tableView.beginUpdates()
+                tableView.reloadRowsAtIndexPaths([NSIndexPath(forRow: 0, inSection: 2)], withRowAnimation: UITableViewRowAnimation.None)
+                tableView.insertRowsAtIndexPaths(paths, withRowAnimation: UITableViewRowAnimation.Top)
+                tableView.endUpdates()
+            } else {
+                selectedSort = sortTypes[indexPath.row]
+                tableView.beginUpdates()
+                tableView.reloadRowsAtIndexPaths([NSIndexPath(forRow: 0, inSection: 2)], withRowAnimation: UITableViewRowAnimation.None)
+                tableView.deleteRowsAtIndexPaths(paths, withRowAnimation: UITableViewRowAnimation.Top)
+                tableView.endUpdates()
+            }
+        }
     }
 }

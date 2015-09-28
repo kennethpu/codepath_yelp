@@ -9,10 +9,13 @@
 import UIKit
 
 class BusinessesViewController: UIViewController {
-
-    var businesses: [Business]!
     
     @IBOutlet weak var tableView: UITableView!
+    
+    var businesses: [Business]!
+    var searchBusinesses: [Business]!
+    var searchBar: UISearchBar!
+    var isSearching: Bool!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -20,23 +23,25 @@ class BusinessesViewController: UIViewController {
         self.tableView.delegate = self
         self.tableView.dataSource = self
         self.tableView.rowHeight = UITableViewAutomaticDimension
-        tableView.estimatedRowHeight = 100
+        self.tableView.estimatedRowHeight = 100
 
+        self.searchBar = UISearchBar()
+        self.searchBar.delegate = self
+        self.searchBar.sizeToFit()
+        self.navigationItem.titleView = self.searchBar
+        
+        let tapGesture = UITapGestureRecognizer(target: self.searchBar, action: Selector("resignFirstResponder"))
+        tapGesture.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tapGesture)
+        
+        self.isSearching = false
+        
         Business.searchWithTerm("Thai", completion: { (businesses: [Business]!, error: NSError!) -> Void in
             self.businesses = businesses
             self.tableView.reloadData()
         })
-        
-//        Business.searchWithTerm("Restaurants", sort: .Distance, categories: ["asianfusion", "burgers"], deals: true) { (businesses: [Business]!, error: NSError!) -> Void in
-//            self.businesses = businesses
-//            
-//            for business in businesses {
-//                print(business.name!)
-//                print(business.address!)
-//            }
-//        }
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -53,8 +58,11 @@ extension BusinessesViewController: FiltersViewControllerDelegate {
     func filtersViewController(filtersViewController: FiltersViewController, didUpdateFilters filters: [String : AnyObject]) {
         
         let categories = filters["categories"] as? [String]
+        let sortType = YelpSortMode(rawValue: filters["sort"] as! Int)
+        let dealOffered = filters["deals"] as? Bool
+        let distance = filters["distance"] as? Int
         
-        Business.searchWithTerm("Restaurants", sort: nil, categories: categories, deals: nil) {
+        Business.searchWithTerm("Restaurants", distance: distance, sort: sortType, categories: categories, deals: dealOffered) {
             (businesses: [Business]!, error: NSError!) -> Void in
             self.businesses = businesses
             self.tableView.reloadData()
@@ -64,18 +72,38 @@ extension BusinessesViewController: FiltersViewControllerDelegate {
 
 extension BusinessesViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if (businesses != nil) {
-            return businesses!.count
+        if (isSearching!) {
+            return (searchBusinesses != nil) ? searchBusinesses!.count : 0
         } else {
-            return 0
+            return (businesses != nil) ? businesses!.count : 0
         }
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCellWithIdentifier("BusinessCell", forIndexPath: indexPath) as! BusinessCell
         
-        cell.business = self.businesses[indexPath.row]
+        cell.business = (isSearching!) ? searchBusinesses![indexPath.row] : businesses![indexPath.row]
         
         return cell
+    }
+}
+
+extension BusinessesViewController: UISearchBarDelegate {
+    func searchBar(searchBar: UISearchBar, textDidChange searchText: String) {
+        if (searchText == "") {
+            isSearching = false
+            tableView.reloadData()
+            return
+        }
+        isSearching = true
+        searchBusinesses?.removeAll()
+        
+        let searchPredicate = NSPredicate(format: "name contains %@", searchText)
+        searchBusinesses = businesses.filter( { searchPredicate.evaluateWithObject($0) } )
+        tableView.reloadData()
+    }
+    
+    func searchBarSearchButtonClicked(searchBar: UISearchBar) {
+        searchBar.resignFirstResponder()
     }
 }
