@@ -332,6 +332,7 @@ extension FiltersViewController: UITableViewDataSource, UITableViewDelegate {
                 cell = UITableViewCell.init(style: UITableViewCellStyle.Default, reuseIdentifier: "DefaultCell")
             }
             cell!.textLabel!.text = selectedDistance
+            cell!.textLabel!.textAlignment = NSTextAlignment.Left
             cell!.accessoryView = UIImageView(image: UIImage(named: "expand"))
             
             return cell!
@@ -341,6 +342,7 @@ extension FiltersViewController: UITableViewDataSource, UITableViewDelegate {
                 cell = UITableViewCell.init(style: UITableViewCellStyle.Default, reuseIdentifier: "DefaultCell")
             }
             cell!.textLabel!.text = distances[indexPath.row]
+            cell!.textLabel!.textAlignment = NSTextAlignment.Left
             cell!.accessoryType = (cell!.textLabel!.text == selectedDistance) ? UITableViewCellAccessoryType.Checkmark : UITableViewCellAccessoryType.None
             
             return cell!
@@ -350,6 +352,7 @@ extension FiltersViewController: UITableViewDataSource, UITableViewDelegate {
                 cell = UITableViewCell.init(style: UITableViewCellStyle.Default, reuseIdentifier: "DefaultCell")
             }
             cell!.textLabel!.text = selectedSort
+            cell!.textLabel!.textAlignment = NSTextAlignment.Left
             cell!.accessoryView = UIImageView(image: UIImage(named: "expand"))
             cell!.accessoryType = UITableViewCellAccessoryType.None
             
@@ -360,6 +363,7 @@ extension FiltersViewController: UITableViewDataSource, UITableViewDelegate {
                 cell = UITableViewCell.init(style: UITableViewCellStyle.Default, reuseIdentifier: "DefaultCell")
             }
             cell!.textLabel!.text = sortTypes[indexPath.row]
+            cell!.textLabel!.textAlignment = NSTextAlignment.Left
             cell!.accessoryView = nil
             cell!.accessoryType = (cell!.textLabel!.text == selectedSort) ? UITableViewCellAccessoryType.Checkmark : UITableViewCellAccessoryType.None
             
