@@ -27,6 +27,7 @@ class FiltersViewController: UIViewController {
     var sortTypes: [String]!
     var selectedSort: String!
     
+    var categoriesExpanded: Bool!
     var categories: [[String:String]]!
     var switchStates = [Int:Bool]()
     
@@ -38,20 +39,21 @@ class FiltersViewController: UIViewController {
         dealOffered = false
         
         distanceExpanded = false
-//        distances = ["Auto", "500 meters", "1,600 meters", "8,000 meters", "40,000 meters"]
         distances = ["Auto", "0.3 miles", "1 mile", "5 miles", "20 miles"]
         selectedDistance = "Auto"
-//        distanceDict = ["Auto":0, "500 meters":500, "1,600 meters":1600, "8,000 meters":8000, "40,000 meters":40000]
         distanceDict = ["Auto":0, "0.3 miles":483, "1 mile":1610, "5 miles":8047, "20 miles":32187]
         
         sortExpanded = false
         sortTypes = ["Best Match", "Distance", "Highest Rated"]
         selectedSort = "Best Match"
         
+        categoriesExpanded = false
         categories = yelpCategories()
         
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.rowHeight = UITableViewAutomaticDimension
+        tableView.estimatedRowHeight = 50
         
         tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier:"DefaultCell")
     }
@@ -307,7 +309,9 @@ extension FiltersViewController: UITableViewDataSource, UITableViewDelegate {
             return 1
         case 2 where sortExpanded!:
             return sortTypes.count
-        case 3:
+        case 3 where !categoriesExpanded:
+            return 4
+        case 3 where categoriesExpanded!:
             return categories!.count
         default:
             return 1
@@ -360,7 +364,29 @@ extension FiltersViewController: UITableViewDataSource, UITableViewDelegate {
             cell!.accessoryType = (cell!.textLabel!.text == selectedSort) ? UITableViewCellAccessoryType.Checkmark : UITableViewCellAccessoryType.None
             
             return cell!
-        case 3:
+        case 3 where !categoriesExpanded:
+            if (indexPath.row == 3) {
+                var cell: UITableViewCell? = tableView.dequeueReusableCellWithIdentifier("DefaultCell", forIndexPath: indexPath)
+                if (cell == nil) {
+                    cell = UITableViewCell.init(style: UITableViewCellStyle.Default, reuseIdentifier: "DefaultCell")
+                }
+                cell!.textLabel!.text = "See All"
+                cell!.textLabel!.textAlignment = NSTextAlignment.Center
+                cell!.accessoryView = nil
+                cell!.accessoryType = UITableViewCellAccessoryType.None
+                
+                return cell!
+            } else {
+                let cell = tableView.dequeueReusableCellWithIdentifier("SwitchCell", forIndexPath: indexPath) as! SwitchCell
+                
+                cell.switchLabel.text = self.categories[indexPath.row]["name"]
+                cell.delegate = self
+                
+                cell.onSwitch.on = switchStates[indexPath.row] ?? false
+                
+                return cell
+            }
+        case 3 where categoriesExpanded!:
             let cell = tableView.dequeueReusableCellWithIdentifier("SwitchCell", forIndexPath: indexPath) as! SwitchCell
             
             cell.switchLabel.text = self.categories[indexPath.row]["name"]
@@ -416,6 +442,18 @@ extension FiltersViewController: UITableViewDataSource, UITableViewDelegate {
                 tableView.beginUpdates()
                 tableView.reloadRowsAtIndexPaths([NSIndexPath(forRow: 0, inSection: 2)], withRowAnimation: UITableViewRowAnimation.None)
                 tableView.deleteRowsAtIndexPaths(paths, withRowAnimation: UITableViewRowAnimation.Top)
+                tableView.endUpdates()
+            }
+        } else if (indexPath.section == 3) {
+            if (!categoriesExpanded && indexPath.row == 3) {
+                categoriesExpanded = !categoriesExpanded
+                var paths = [NSIndexPath]()
+                for index in 4...categories.count-1 {
+                    paths.append(NSIndexPath(forRow: index, inSection: 3))
+                }
+                tableView.beginUpdates()
+                tableView.reloadRowsAtIndexPaths([NSIndexPath(forRow: 3, inSection: 3)], withRowAnimation: UITableViewRowAnimation.Bottom)
+                tableView.insertRowsAtIndexPaths(paths, withRowAnimation: UITableViewRowAnimation.Top)
                 tableView.endUpdates()
             }
         }
